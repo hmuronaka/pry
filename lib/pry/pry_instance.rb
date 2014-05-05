@@ -30,6 +30,8 @@ class Pry
   attr_accessor :last_result
   attr_accessor :last_file
   attr_accessor :last_dir
+  attr_accessor :last_line
+  attr_accessor :repeat_command_names
 
   attr_reader :last_exception
   attr_reader :command_state
@@ -77,6 +79,7 @@ class Pry
     @custom_completions = config.command_completions
     set_last_result nil
     @input_array << nil
+    @repeat_command_names = "s n c f".split(/\s+/)
     push_initial_binding(target)
     exec_hook(:when_started, target, options, self)
   end
@@ -260,6 +263,13 @@ class Pry
       config.control_d_handler.call(@eval_string, self)
       return
     end
+
+    if line.chomp.empty?
+      if @repeat_command_names.include?(@last_line)
+        line = @last_line
+      end
+    end
+    @last_line = line.chomp
 
     ensure_correct_encoding!(line)
     Pry.history << line unless options[:generated]
